@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Heart, Users, Camera, Calendar, Menu, X } from "lucide-react";
+import { Heart, Users, Camera, Calendar, Menu, X, LogOut } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
+  const { user, signOut } = useAuth();
 
   const navItems = [
     { href: "/", label: "Home", icon: Heart },
@@ -45,6 +47,17 @@ const Navigation = () => {
                 </Button>
               </Link>
             ))}
+            {user && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={signOut}
+                className="flex items-center space-x-2 text-muted-foreground hover:text-foreground"
+              >
+                <LogOut className="w-4 h-4" />
+                <span>Sign Out</span>
+              </Button>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -77,6 +90,16 @@ const Navigation = () => {
                 </Button>
               </Link>
             ))}
+            {user && (
+              <Button
+                variant="ghost"
+                onClick={signOut}
+                className="w-full justify-start space-x-2 text-muted-foreground hover:text-foreground"
+              >
+                <LogOut className="w-4 h-4" />
+                <span>Sign Out</span>
+              </Button>
+            )}
           </div>
         )}
       </div>

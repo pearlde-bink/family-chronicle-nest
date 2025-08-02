@@ -1,5 +1,6 @@
 import { useState } from "react";
 import Layout from "@/components/Layout";
+import ProtectedRoute from "@/components/ProtectedRoute";
 import PhotoGrid from "@/components/PhotoGrid";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -124,7 +125,8 @@ const Photos = () => {
   });
 
   return (
-    <Layout>
+    <ProtectedRoute>
+      <Layout>
       {/* Header */}
       <div className="text-center mb-8 animate-fade-in">
         <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4">Family Photos</h1>
@@ -239,6 +241,7 @@ const Photos = () => {
         </Button>
       </div>
     </Layout>
+    </ProtectedRoute>
   );
 };
 

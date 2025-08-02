@@ -1,4 +1,5 @@
 import Layout from "@/components/Layout";
+import ProtectedRoute from "@/components/ProtectedRoute";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -126,7 +127,8 @@ const Events = () => {
   };
 
   return (
-    <Layout>
+    <ProtectedRoute>
+      <Layout>
       {/* Header */}
       <div className="text-center mb-12 animate-fade-in">
         <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4">Family Events</h1>
@@ -305,6 +307,7 @@ const Events = () => {
         </Button>
       </div>
     </Layout>
+    </ProtectedRoute>
   );
 };
 
