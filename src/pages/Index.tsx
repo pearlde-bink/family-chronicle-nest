@@ -196,11 +196,11 @@ const Index = () => {
           style={{
             backgroundImage: `url(${backgroundImage})`,
             backgroundBlendMode: 'overlay',
-            // backgroundColor: 'rgb(150, 100, 71)',
-            backgroundColor: 'rgb(141, 100, 64)',
+            backgroundColor: 'rgb(150, 100, 71)',
+            // backgroundColor: 'rgb(141, 100, 64)',
           }}
         >
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-rose-100/30 to-black/40"></div>
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-rose-160/80 to-black/60"></div>
         </div>
 
         {/* Content */}
