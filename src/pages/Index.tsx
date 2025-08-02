@@ -1,104 +1,129 @@
-import Layout from "@/components/Layout";
-import PhotoGrid from "@/components/PhotoGrid";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Heart, Users, Calendar, Camera, LogIn, UserPlus } from "lucide-react";
-import { Link } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
-import familyHero from "@/assets/family-hero.jpg";
-import familyGrid from "@/assets/family-grid.jpg";
+import { useState, useEffect } from 'react';
+import Layout from '@/components/Layout';
+import PhotoGrid from '@/components/PhotoGrid';
+import PhotoModal from '@/components/PhotoModal';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Heart, Users, Calendar, Camera, LogIn, UserPlus } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
+import { dataService } from '@/services/dataService';
+import { useToast } from '@/hooks/use-toast';
+import type { Database } from '@/integrations/supabase/types';
+
+type FamilyMember = Database['public']['Tables']['family_members']['Row'];
+type FamilyPhoto = Database['public']['Tables']['family_photos']['Row'];
+type FamilyEvent = Database['public']['Tables']['family_events']['Row'];
 
 const Index = () => {
   const { user, loading } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
 
-  // Sample family photos for the grid
-  const recentPhotos = [
-    { id: "1", src: familyGrid, alt: "Family moments", title: "Recent Memories" },
-    { id: "2", src: familyHero, alt: "Family gathering", title: "Holiday 2024" },
-    { id: "3", src: familyGrid, alt: "Birthday party", title: "Birthday Fun" },
-    { id: "4", src: familyHero, alt: "Vacation", title: "Summer Trip" },
-    { id: "5", src: familyGrid, alt: "Family dinner", title: "Sunday Dinner" },
-    { id: "6", src: familyHero, alt: "New Year", title: "New Year 2024" },
-  ];
+  const [recentPhotos, setRecentPhotos] = useState<FamilyPhoto[]>([]);
+  const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
+  const [upcomingEvents, setUpcomingEvents] = useState<FamilyEvent[]>([]);
+  const [stats, setStats] = useState({
+    totalPhotos: 0,
+    totalMembers: 0,
+    totalEvents: 0,
+  });
+  const [dataLoading, setDataLoading] = useState(true);
+  const [selectedPhoto, setSelectedPhoto] = useState<FamilyPhoto | null>(null);
+  const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
 
-  if (loading) {
+  // Load data from Supabase
+  useEffect(() => {
+    const loadData = async () => {
+      setDataLoading(true);
+      try {
+        const [photosData, membersData, eventsData] = await Promise.all([
+          dataService.getFamilyPhotos(),
+          dataService.getFamilyMembers(),
+          dataService.getFamilyEvents(),
+        ]);
+
+        // Get recent photos (limit to 6)
+        setRecentPhotos(photosData.slice(0, 6));
+
+        // Get family members
+        setFamilyMembers(membersData);
+
+        // Get upcoming events (next 30 days)
+        const now = new Date();
+        const thirtyDaysFromNow = new Date(
+          now.getTime() + 30 * 24 * 60 * 60 * 1000
+        );
+        const upcoming = eventsData.filter((event) => {
+          const eventDate = new Date(event.event_date);
+          return eventDate >= now && eventDate <= thirtyDaysFromNow;
+        });
+        setUpcomingEvents(upcoming.slice(0, 3));
+
+        // Calculate stats
+        setStats({
+          totalPhotos: photosData.length,
+          totalMembers: membersData.length,
+          totalEvents: eventsData.length,
+        });
+      } catch (error) {
+        console.error('Error loading data:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to load data. Please try again.',
+          variant: 'destructive',
+        });
+      } finally {
+        setDataLoading(false);
+      }
+    };
+
+    loadData();
+  }, [toast]);
+
+  const handlePhotoClick = (photo: { id: string }) => {
+    const familyPhoto = recentPhotos.find((p) => p.id === photo.id);
+    if (familyPhoto) {
+      const index = recentPhotos.findIndex((p) => p.id === photo.id);
+      setCurrentPhotoIndex(index);
+      setSelectedPhoto(familyPhoto);
+    }
+  };
+
+  const handleNavigate = (direction: 'prev' | 'next') => {
+    let newIndex;
+    if (direction === 'prev') {
+      newIndex =
+        currentPhotoIndex > 0 ? currentPhotoIndex - 1 : recentPhotos.length - 1;
+    } else {
+      newIndex =
+        currentPhotoIndex < recentPhotos.length - 1 ? currentPhotoIndex + 1 : 0;
+    }
+    setCurrentPhotoIndex(newIndex);
+    setSelectedPhoto(recentPhotos[newIndex]);
+  };
+
+  // Convert database photos to display format
+  const displayPhotos = recentPhotos.map((photo) => ({
+    id: photo.id,
+    src: photo.image_url,
+    alt: photo.title,
+    title: photo.title,
+    description: photo.description,
+    date: photo.taken_date,
+    location: photo.location,
+    people: photo.tags || [],
+  }));
+
+  if (loading || dataLoading) {
     return (
       <Layout>
         <div className="min-h-[60vh] flex items-center justify-center">
           <div className="text-center">
             <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Loading...</p>
+            <p className="text-muted-foreground">Loading family memories...</p>
           </div>
         </div>
-      </Layout>
-    );
-  }
-
-  if (!user) {
-    return (
-      <Layout>
-        {/* Hero Section - Unauthenticated */}
-        <section className="relative overflow-hidden rounded-2xl bg-gradient-warm mb-12 animate-fade-in">
-          <div className="relative z-10 px-8 py-16 text-center">
-            <div className="max-w-3xl mx-auto">
-              <div className="mb-6 inline-flex items-center justify-center w-16 h-16 bg-white/20 rounded-full">
-                <Heart className="w-8 h-8 text-primary-foreground" />
-              </div>
-              <h1 className="text-4xl md:text-6xl font-bold text-primary-foreground mb-6">
-                Welcome to Our Family Chronicle
-              </h1>
-              <p className="text-xl text-primary-foreground/90 mb-8 leading-relaxed">
-                A private space where we celebrate our bonds, share memories, and create lasting connections. 
-                Sign in to access our family photos, events, and memories.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link to="/auth">
-                  <Button variant="cream" size="lg" className="w-full sm:w-auto">
-                    <LogIn className="w-5 h-5 mr-2" />
-                    Sign In
-                  </Button>
-                </Link>
-                <Link to="/auth">
-                  <Button variant="outline" size="lg" className="w-full sm:w-auto border-white/30 text-primary-foreground hover:bg-white/10">
-                    <UserPlus className="w-5 h-5 mr-2" />
-                    Create Account
-                  </Button>
-                </Link>
-              </div>
-            </div>
-          </div>
-          <div className="absolute inset-0 bg-black/20"></div>
-          <img 
-            src={familyHero} 
-            alt="Our beautiful family" 
-            className="absolute inset-0 w-full h-full object-cover"
-          />
-        </section>
-
-        {/* Preview Info */}
-        <section className="text-center mb-12">
-          <div className="max-w-2xl mx-auto">
-            <h2 className="text-3xl font-bold text-foreground mb-4">Sign in to explore</h2>
-            <p className="text-muted-foreground mb-8">
-              Once signed in, you'll have access to family photos, event calendars, member profiles, and more.
-            </p>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {[
-                { icon: Users, label: "Family Profiles", color: "text-family-warm" },
-                { icon: Camera, label: "Photo Gallery", color: "text-primary" },
-                { icon: Calendar, label: "Events", color: "text-family-brown" },
-                { icon: Heart, label: "Memories", color: "text-family-gold" },
-              ].map(({ icon: Icon, label, color }) => (
-                <Card key={label} className="text-center hover:shadow-soft transition-shadow">
-                  <CardContent className="p-6">
-                    <Icon className={`w-8 h-8 mx-auto mb-3 ${color}`} />
-                    <div className="text-sm text-muted-foreground">{label}</div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        </section>
       </Layout>
     );
   }
@@ -106,108 +131,239 @@ const Index = () => {
   return (
     <Layout>
       {/* Hero Section */}
-      <section className="relative overflow-hidden rounded-2xl bg-gradient-warm mb-12 animate-fade-in">
-        <div className="relative z-10 px-8 py-16 text-center">
-          <div className="max-w-3xl mx-auto">
-            <div className="mb-6 inline-flex items-center justify-center w-16 h-16 bg-white/20 rounded-full">
-              <Heart className="w-8 h-8 text-primary-foreground" />
-            </div>
-            <h1 className="text-4xl md:text-6xl font-bold text-primary-foreground mb-6">
+      <section className="relative h-96 overflow-hidden bg-gradient-warm rounded-3xl mb-12 animate-fade-in">
+        <div className="absolute inset-0 bg-black/20"></div>
+        <div className="relative z-10 h-full flex items-center justify-center text-center text-white">
+          <div className="max-w-4xl mx-auto px-4">
+            <h1 className="text-5xl md:text-7xl font-bold mb-6">
               Welcome to Our Family
             </h1>
-            <p className="text-xl text-primary-foreground/90 mb-8 leading-relaxed">
-              A private space where we celebrate our bonds, share memories, and create lasting connections. 
-              Explore our family tree, relive precious moments, and stay connected with those who matter most.
+            <p className="text-xl md:text-2xl mb-8 opacity-90">
+              Preserving memories, celebrating moments, and sharing love across
+              generations.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/members">
-                <Button variant="cream" size="lg" className="w-full sm:w-auto">
-                  <Users className="w-5 h-5 mr-2" />
-                  Meet the Family
+            {!user ? (
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Button
+                  variant="family"
+                  size="lg"
+                  onClick={() => navigate('/auth')}
+                  className="text-lg px-8 py-3"
+                >
+                  <LogIn className="w-5 h-5 mr-2" />
+                  Sign In
                 </Button>
-              </Link>
-              <Link to="/photos">
-                <Button variant="outline" size="lg" className="w-full sm:w-auto border-white/30 text-primary-foreground hover:bg-white/10">
+                <Button
+                  variant="cream"
+                  size="lg"
+                  onClick={() => navigate('/auth')}
+                  className="text-lg px-8 py-3"
+                >
+                  <UserPlus className="w-5 h-5 mr-2" />
+                  Join Family
+                </Button>
+              </div>
+            ) : (
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Button
+                  variant="family"
+                  size="lg"
+                  onClick={() => navigate('/photos')}
+                  className="text-lg px-8 py-3"
+                >
                   <Camera className="w-5 h-5 mr-2" />
                   View Photos
                 </Button>
-              </Link>
-            </div>
+                <Button
+                  variant="cream"
+                  size="lg"
+                  onClick={() => navigate('/events')}
+                  className="text-lg px-8 py-3"
+                >
+                  <Calendar className="w-5 h-5 mr-2" />
+                  See Events
+                </Button>
+              </div>
+            )}
           </div>
         </div>
-        <div className="absolute inset-0 bg-black/20"></div>
-        <img 
-          src={familyHero} 
-          alt="Our beautiful family" 
-          className="absolute inset-0 w-full h-full object-cover"
-        />
       </section>
 
       {/* Stats Section */}
-      <section className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
-        {[
-          { icon: Users, label: "Family Members", value: "12", color: "text-family-warm" },
-          { icon: Camera, label: "Shared Photos", value: "847", color: "text-primary" },
-          { icon: Calendar, label: "Events", value: "23", color: "text-family-brown" },
-          { icon: Heart, label: "Years Together", value: "∞", color: "text-family-gold" },
-        ].map(({ icon: Icon, label, value, color }) => (
-          <Card key={label} className="text-center hover:shadow-soft transition-shadow animate-fade-in">
+      <section className="mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Card className="text-center hover:shadow-photo transition-all duration-300 animate-fade-in">
             <CardContent className="p-6">
-              <Icon className={`w-8 h-8 mx-auto mb-3 ${color}`} />
-              <div className="text-2xl font-bold text-foreground mb-1">{value}</div>
-              <div className="text-sm text-muted-foreground">{label}</div>
+              <div className="w-16 h-16 bg-family-warm rounded-full flex items-center justify-center mx-auto mb-4">
+                <Camera className="w-8 h-8 text-white" />
+              </div>
+              <div className="text-3xl font-bold text-foreground mb-2">
+                {stats.totalPhotos}
+              </div>
+              <div className="text-muted-foreground">Family Photos</div>
             </CardContent>
           </Card>
-        ))}
+
+          <Card className="text-center hover:shadow-photo transition-all duration-300 animate-fade-in">
+            <CardContent className="p-6">
+              <div className="w-16 h-16 bg-family-gold rounded-full flex items-center justify-center mx-auto mb-4">
+                <Users className="w-8 h-8 text-white" />
+              </div>
+              <div className="text-3xl font-bold text-foreground mb-2">
+                {stats.totalMembers}
+              </div>
+              <div className="text-muted-foreground">Family Members</div>
+            </CardContent>
+          </Card>
+
+          <Card className="text-center hover:shadow-photo transition-all duration-300 animate-fade-in">
+            <CardContent className="p-6">
+              <div className="w-16 h-16 bg-family-brown rounded-full flex items-center justify-center mx-auto mb-4">
+                <Calendar className="w-8 h-8 text-white" />
+              </div>
+              <div className="text-3xl font-bold text-foreground mb-2">
+                {stats.totalEvents}
+              </div>
+              <div className="text-muted-foreground">Special Events</div>
+            </CardContent>
+          </Card>
+        </div>
       </section>
 
-      {/* Recent Photos Section */}
+      {/* Recent Memories Section */}
       <section className="mb-12">
-        <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold text-foreground mb-4">Recent Memories</h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
-            Our latest adventures, celebrations, and everyday moments that make our family special.
-          </p>
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h2 className="text-3xl font-bold text-foreground mb-2">
+              Recent Memories
+            </h2>
+            <p className="text-muted-foreground">
+              Our latest captured moments and precious memories.
+            </p>
+          </div>
+          <Button
+            variant="family"
+            size="sm"
+            onClick={() => navigate('/photos')}
+          >
+            View All Photos
+          </Button>
         </div>
-        <PhotoGrid photos={recentPhotos} className="animate-fade-in" />
-        <div className="text-center mt-8">
-          <Link to="/photos">
-            <Button variant="family" size="lg">
-              <Camera className="w-5 h-5 mr-2" />
-              View All Photos
+
+        {recentPhotos.length > 0 ? (
+          <PhotoGrid
+            photos={displayPhotos}
+            className="animate-fade-in"
+            onPhotoClick={handlePhotoClick}
+          />
+        ) : (
+          <div className="text-center py-12">
+            <Camera className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-foreground mb-2">
+              No photos yet
+            </h3>
+            <p className="text-muted-foreground mb-4">
+              Start adding photos to see them here!
+            </p>
+            <Button onClick={() => navigate('/photos')}>
+              <Camera className="w-4 h-4 mr-2" />
+              Add First Photo
             </Button>
-          </Link>
-        </div>
+          </div>
+        )}
       </section>
 
       {/* Quick Links */}
-      <section className="grid md:grid-cols-2 gap-6">
-        <Card className="bg-gradient-sunset hover:shadow-warm transition-shadow animate-fade-in">
-          <CardContent className="p-8 text-center">
-            <Calendar className="w-12 h-12 text-family-warm mx-auto mb-4" />
-            <h3 className="text-2xl font-bold text-foreground mb-3">Upcoming Events</h3>
-            <p className="text-muted-foreground mb-6">
-              Never miss a birthday, anniversary, or family gathering. Stay connected with what's coming up.
-            </p>
-            <Link to="/events">
-              <Button variant="family">View Events</Button>
-            </Link>
-          </CardContent>
-        </Card>
+      <section className="mb-12">
+        <h2 className="text-3xl font-bold text-foreground mb-8 text-center">
+          Explore Our Family
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <Link to="/members">
+            <Card className="group hover:shadow-photo transition-all duration-300 cursor-pointer animate-fade-in">
+              <CardContent className="p-6 text-center">
+                <div className="w-16 h-16 bg-family-warm rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
+                  <Users className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="text-xl font-semibold text-foreground mb-2">
+                  Family Members
+                </h3>
+                <p className="text-muted-foreground">
+                  Meet our amazing family members and learn their stories.
+                </p>
+              </CardContent>
+            </Card>
+          </Link>
 
-        <Card className="bg-gradient-photo hover:shadow-warm transition-shadow animate-fade-in">
-          <CardContent className="p-8 text-center">
-            <Users className="w-12 h-12 text-primary mx-auto mb-4" />
-            <h3 className="text-2xl font-bold text-foreground mb-3">Family Members</h3>
-            <p className="text-muted-foreground mb-6">
-              Get to know everyone better with individual profiles, stories, and personal galleries.
-            </p>
-            <Link to="/members">
-              <Button variant="family">Meet Everyone</Button>
-            </Link>
-          </CardContent>
-        </Card>
+          <Link to="/photos">
+            <Card className="group hover:shadow-photo transition-all duration-300 cursor-pointer animate-fade-in">
+              <CardContent className="p-6 text-center">
+                <div className="w-16 h-16 bg-family-gold rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
+                  <Camera className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="text-xl font-semibold text-foreground mb-2">
+                  Photo Gallery
+                </h3>
+                <p className="text-muted-foreground">
+                  Browse through our collection of precious family moments.
+                </p>
+              </CardContent>
+            </Card>
+          </Link>
+
+          <Link to="/events">
+            <Card className="group hover:shadow-photo transition-all duration-300 cursor-pointer animate-fade-in">
+              <CardContent className="p-6 text-center">
+                <div className="w-16 h-16 bg-family-brown rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
+                  <Calendar className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="text-xl font-semibold text-foreground mb-2">
+                  Family Events
+                </h3>
+                <p className="text-muted-foreground">
+                  Stay updated with upcoming celebrations and special occasions.
+                </p>
+              </CardContent>
+            </Card>
+          </Link>
+
+          <Card className="group hover:shadow-photo transition-all duration-300 cursor-pointer animate-fade-in">
+            <CardContent className="p-6 text-center">
+              <div className="w-16 h-16 bg-family-cream rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
+                <Heart className="w-8 h-8 text-family-brown" />
+              </div>
+              <h3 className="text-xl font-semibold text-foreground mb-2">
+                Family Stories
+              </h3>
+              <p className="text-muted-foreground">
+                Share and preserve our family's stories and traditions.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
       </section>
+
+      {/* Photo Modal */}
+      <PhotoModal
+        photo={
+          selectedPhoto
+            ? {
+                id: selectedPhoto.id,
+                src: selectedPhoto.image_url,
+                alt: selectedPhoto.title,
+                title: selectedPhoto.title,
+                description: selectedPhoto.description,
+                date: selectedPhoto.taken_date,
+                location: selectedPhoto.location,
+                people: selectedPhoto.tags || [],
+              }
+            : null
+        }
+        photos={displayPhotos}
+        isOpen={!!selectedPhoto}
+        onClose={() => setSelectedPhoto(null)}
+        onNavigate={handleNavigate}
+      />
     </Layout>
   );
 };

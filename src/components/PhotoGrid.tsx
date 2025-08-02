@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
+import { useState } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
 
 interface Photo {
   id: string;
@@ -11,22 +11,30 @@ interface Photo {
 interface PhotoGridProps {
   photos: Photo[];
   className?: string;
+  onPhotoClick?: (photo: Photo) => void;
 }
 
-const PhotoGrid = ({ photos, className = "" }: PhotoGridProps) => {
+const PhotoGrid = ({
+  photos,
+  className = '',
+  onPhotoClick,
+}: PhotoGridProps) => {
   const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set());
 
   const handleImageLoad = (id: string) => {
-    setLoadedImages(prev => new Set(prev).add(id));
+    setLoadedImages((prev) => new Set(prev).add(id));
   };
 
   return (
-    <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 ${className}`}>
+    <div
+      className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 ${className}`}
+    >
       {photos.map((photo, index) => (
-        <Card 
-          key={photo.id} 
-          className="group overflow-hidden hover:shadow-photo transition-shadow duration-300 bg-gradient-photo"
+        <Card
+          key={photo.id}
+          className="group overflow-hidden hover:shadow-photo transition-shadow duration-300 bg-gradient-photo cursor-pointer"
           style={{ animationDelay: `${index * 0.1}s` }}
+          onClick={() => onPhotoClick?.(photo)}
         >
           <CardContent className="p-0">
             <div className="relative overflow-hidden aspect-square">
@@ -43,7 +51,9 @@ const PhotoGrid = ({ photos, className = "" }: PhotoGridProps) => {
               />
               {photo.title && (
                 <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4">
-                  <p className="text-white text-sm font-medium">{photo.title}</p>
+                  <p className="text-white text-sm font-medium">
+                    {photo.title}
+                  </p>
                 </div>
               )}
             </div>
