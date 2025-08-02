@@ -14,7 +14,211 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      family_events: {
+        Row: {
+          attendees: string[] | null
+          created_at: string
+          description: string | null
+          event_date: string
+          event_type: string | null
+          id: string
+          is_recurring: boolean | null
+          location: string | null
+          photos: string[] | null
+          recurrence_pattern: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          attendees?: string[] | null
+          created_at?: string
+          description?: string | null
+          event_date: string
+          event_type?: string | null
+          id?: string
+          is_recurring?: boolean | null
+          location?: string | null
+          photos?: string[] | null
+          recurrence_pattern?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          attendees?: string[] | null
+          created_at?: string
+          description?: string | null
+          event_date?: string
+          event_type?: string | null
+          id?: string
+          is_recurring?: boolean | null
+          location?: string | null
+          photos?: string[] | null
+          recurrence_pattern?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      family_members: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          birthday: string | null
+          created_at: string
+          fun_facts: string[] | null
+          id: string
+          name: string
+          nickname: string | null
+          relationship: string | null
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          birthday?: string | null
+          created_at?: string
+          fun_facts?: string[] | null
+          id?: string
+          name: string
+          nickname?: string | null
+          relationship?: string | null
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          birthday?: string | null
+          created_at?: string
+          fun_facts?: string[] | null
+          id?: string
+          name?: string
+          nickname?: string | null
+          relationship?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      family_photos: {
+        Row: {
+          category_id: string | null
+          created_at: string
+          description: string | null
+          featured: boolean | null
+          id: string
+          image_url: string
+          location: string | null
+          tags: string[] | null
+          taken_date: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category_id?: string | null
+          created_at?: string
+          description?: string | null
+          featured?: boolean | null
+          id?: string
+          image_url: string
+          location?: string | null
+          tags?: string[] | null
+          taken_date?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category_id?: string | null
+          created_at?: string
+          description?: string | null
+          featured?: boolean | null
+          id?: string
+          image_url?: string
+          location?: string | null
+          tags?: string[] | null
+          taken_date?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "family_photos_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "photo_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      family_posts: {
+        Row: {
+          author_id: string | null
+          content: string
+          created_at: string
+          id: string
+          images: string[] | null
+          is_milestone: boolean | null
+          post_date: string
+          tags: string[] | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          author_id?: string | null
+          content: string
+          created_at?: string
+          id?: string
+          images?: string[] | null
+          is_milestone?: boolean | null
+          post_date?: string
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string | null
+          content?: string
+          created_at?: string
+          id?: string
+          images?: string[] | null
+          is_milestone?: boolean | null
+          post_date?: string
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "family_posts_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "family_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      photo_categories: {
+        Row: {
+          color: string | null
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
