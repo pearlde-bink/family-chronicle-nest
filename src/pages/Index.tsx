@@ -10,6 +10,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { dataService } from '@/services/dataService';
 import { useToast } from '@/hooks/use-toast';
 import type { Database } from '@/integrations/supabase/types';
+import backgroundImage from '@/assets/giadinh.jpg';
 
 type FamilyMember = Database['public']['Tables']['family_members']['Row'];
 type FamilyPhoto = Database['public']['Tables']['family_photos']['Row'];
@@ -131,16 +132,16 @@ const Index = () => {
   return (
     <Layout>
       {/* Hero Section */}
-      <section className="relative h-96 overflow-hidden bg-gradient-warm rounded-3xl mb-12 animate-fade-in">
+      {/*<section className="relative h-96 overflow-hidden bg-gradient-warm rounded-3xl mb-12 animate-fade-in">
         <div className="absolute inset-0 bg-black/20"></div>
-        <div className="relative z-10 h-full flex items-center justify-center text-center text-white">
+         <div className="relative z-10 h-full flex items-center justify-center text-center text-white">
           <div className="max-w-4xl mx-auto px-4">
             <h1 className="text-5xl md:text-7xl font-bold mb-6">
-              Welcome to Our Family
+              Our Family’s Timeless Journey
             </h1>
             <p className="text-xl md:text-2xl mb-8 opacity-90">
-              Preserving memories, celebrating moments, and sharing love across
-              generations.
+              A cherished space to weave our stories, treasure our memories, and
+              embrace the love that binds us across generations.
             </p>
             {!user ? (
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -186,6 +187,76 @@ const Index = () => {
               </div>
             )}
           </div>
+        </div> 
+      </section>*/}
+      <section className="relative h-[500px] overflow-hidden rounded-3xl mb-16 shadow-lg">
+        {/* Background Image with Animated Gradient Overlay */}
+        <div
+          className="absolute inset-0 bg-cover bg-center animate-airflow"
+          style={{
+            backgroundImage: `url(${backgroundImage})`,
+            backgroundBlendMode: 'overlay',
+            // backgroundColor: 'rgb(150, 100, 71)',
+            backgroundColor: 'rgb(141, 100, 64)',
+          }}
+        >
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-rose-100/30 to-black/40"></div>
+        </div>
+
+        {/* Content */}
+        <div className="relative z-10 h-full flex items-center justify-center text-center text-white px-4">
+          <div className="max-w-5xl mx-auto">
+            <h1 className="text-5xl md:text-7xl font-serif font-bold mb-6 drop-shadow-md">
+              Our Family’s Timeless Journey
+            </h1>
+            <p className="text-xl md:text-2xl mb-8 opacity-90 font-light tracking-wide">
+              A cherished space to weave our stories, treasure our memories, and
+              embrace the love that binds us across generations.
+            </p>
+            {!user ? (
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Button
+                  variant="family"
+                  size="lg"
+                  onClick={() => navigate('/auth')}
+                  className="text-lg px-8 py-3 bg-rose-500 hover:bg-rose-600 transition-colors duration-300"
+                >
+                  <LogIn className="w-5 h-5 mr-2" />
+                  Join Our Circle
+                </Button>
+                <Button
+                  variant="cream"
+                  size="lg"
+                  onClick={() => navigate('/auth')}
+                  className="text-lg px-8 py-3 bg-amber-400 hover:bg-amber-500 text-rose-900 transition-colors duration-300"
+                >
+                  <UserPlus className="w-5 h-5 mr-2" />
+                  Become Family
+                </Button>
+              </div>
+            ) : (
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Button
+                  variant="family"
+                  size="lg"
+                  onClick={() => navigate('/photos')}
+                  className="text-lg px-8 py-3"
+                >
+                  <Camera className="w-5 h-5 mr-2" />
+                  Cherish Our Photos
+                </Button>
+                <Button
+                  variant="cream"
+                  size="lg"
+                  onClick={() => navigate('/events')}
+                  className="text-lg px-8 py-3"
+                >
+                  <Calendar className="w-5 h-5 mr-2" />
+                  Celebrate Our Events
+                </Button>
+              </div>
+            )}
+          </div>
         </div>
       </section>
 
@@ -200,7 +271,7 @@ const Index = () => {
               <div className="text-3xl font-bold text-foreground mb-2">
                 {stats.totalPhotos}
               </div>
-              <div className="text-muted-foreground">Family Photos</div>
+              <div className="text-muted-foreground">Treasured Photos</div>
             </CardContent>
           </Card>
 
@@ -212,7 +283,7 @@ const Index = () => {
               <div className="text-3xl font-bold text-foreground mb-2">
                 {stats.totalMembers}
               </div>
-              <div className="text-muted-foreground">Family Members</div>
+              <div className="text-muted-foreground">Beloved Members</div>
             </CardContent>
           </Card>
 
@@ -224,7 +295,7 @@ const Index = () => {
               <div className="text-3xl font-bold text-foreground mb-2">
                 {stats.totalEvents}
               </div>
-              <div className="text-muted-foreground">Special Events</div>
+              <div className="text-muted-foreground">Joyful Gatherings</div>
             </CardContent>
           </Card>
         </div>
@@ -235,10 +306,10 @@ const Index = () => {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h2 className="text-3xl font-bold text-foreground mb-2">
-              Recent Memories
+              Our Recent Memories
             </h2>
             <p className="text-muted-foreground">
-              Our latest captured moments and precious memories.
+              Moments that warm our hearts, captured forever in love and light.
             </p>
           </div>
           <Button
@@ -246,7 +317,7 @@ const Index = () => {
             size="sm"
             onClick={() => navigate('/photos')}
           >
-            View All Photos
+            Explore All Memories
           </Button>
         </div>
 
@@ -260,14 +331,14 @@ const Index = () => {
           <div className="text-center py-12">
             <Camera className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-foreground mb-2">
-              No photos yet
+              No Memories yet
             </h3>
             <p className="text-muted-foreground mb-4">
-              Start adding photos to see them here!
+              Begin our family’s story by sharing your first cherished moment.
             </p>
             <Button onClick={() => navigate('/photos')}>
               <Camera className="w-4 h-4 mr-2" />
-              Add First Photo
+              Share Your First Memory
             </Button>
           </div>
         )}
@@ -276,7 +347,7 @@ const Index = () => {
       {/* Quick Links */}
       <section className="mb-12">
         <h2 className="text-3xl font-bold text-foreground mb-8 text-center">
-          Explore Our Family
+          Journey Through Our Family
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <Link to="/members">
@@ -286,10 +357,10 @@ const Index = () => {
                   <Users className="w-8 h-8 text-white" />
                 </div>
                 <h3 className="text-xl font-semibold text-foreground mb-2">
-                  Family Members
+                  Our Loved Ones
                 </h3>
                 <p className="text-muted-foreground">
-                  Meet our amazing family members and learn their stories.
+                  Discover the stories and smiles of our beloved family members.
                 </p>
               </CardContent>
             </Card>
@@ -302,10 +373,10 @@ const Index = () => {
                   <Camera className="w-8 h-8 text-white" />
                 </div>
                 <h3 className="text-xl font-semibold text-foreground mb-2">
-                  Photo Gallery
+                  Memory Gallery
                 </h3>
                 <p className="text-muted-foreground">
-                  Browse through our collection of precious family moments.
+                  Relive the warmth of our family’s most treasured moments.
                 </p>
               </CardContent>
             </Card>
@@ -318,10 +389,10 @@ const Index = () => {
                   <Calendar className="w-8 h-8 text-white" />
                 </div>
                 <h3 className="text-xl font-semibold text-foreground mb-2">
-                  Family Events
+                  Family Gatherings
                 </h3>
                 <p className="text-muted-foreground">
-                  Stay updated with upcoming celebrations and special occasions.
+                  Join us in celebrating the moments that bring us closer.
                 </p>
               </CardContent>
             </Card>
@@ -333,7 +404,7 @@ const Index = () => {
                 <Heart className="w-8 h-8 text-family-brown" />
               </div>
               <h3 className="text-xl font-semibold text-foreground mb-2">
-                Family Stories
+                Our Stories
               </h3>
               <p className="text-muted-foreground">
                 Share and preserve our family's stories and traditions.
