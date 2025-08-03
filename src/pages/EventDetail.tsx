@@ -178,7 +178,7 @@ const EventDetail = () => {
             variant="ghost"
             size="icon"
             className="absolute top-4 left-4 text-white hover:bg-white/20"
-            onClick={() => navigate(-1)}
+            onClick={() => navigate('/events')}
           >
             <ArrowLeft className="w-6 h-6" />
           </Button>

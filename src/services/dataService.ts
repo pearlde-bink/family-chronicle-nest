@@ -31,6 +31,21 @@ export const dataService = {
     return data || [];
   },
 
+  async getFamilyMemberById(id: string): Promise<FamilyMember | null> {
+    const { data, error } = await supabase
+      .from('family_members')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error) {
+      console.error('Error fetching family member:', error);
+      return null;
+    }
+
+    return data;
+  },
+
   async createFamilyMember(
     member: Database['public']['Tables']['family_members']['Insert']
   ): Promise<FamilyMember | null> {
@@ -134,6 +149,45 @@ export const dataService = {
     }
 
     return data;
+  },
+
+  async associatePhotoWithMembers(photoId: string, memberIds: string[]): Promise<boolean> {
+    if (memberIds.length === 0) return true;
+
+    const associations = memberIds.map(memberId => ({
+      photo_id: photoId,
+      member_id: memberId
+    }));
+
+    const { error } = await supabase
+      .from('photo_members')
+      .insert(associations);
+
+    if (error) {
+      console.error('Error associating photo with members:', error);
+      return false;
+    }
+
+    return true;
+  },
+
+  async getPhotosForMember(memberId: string): Promise<PhotoWithCategory[]> {
+    const { data, error } = await supabase
+      .from('photo_members')
+      .select(`
+        family_photos!inner(
+          *,
+          category:photo_categories(*)
+        )
+      `)
+      .eq('member_id', memberId);
+
+    if (error) {
+      console.error('Error fetching photos for member:', error);
+      return [];
+    }
+
+    return data?.map(item => item.family_photos).filter(Boolean) || [];
   },
 
   async uploadPhotoToStorage(file: File, path: string): Promise<string | null> {

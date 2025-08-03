@@ -131,6 +131,15 @@ const Photos = () => {
       });
 
       if (newPhoto) {
+        // Associate photo with tagged family members
+        const memberIds = familyMembers
+          .filter(member => photoData.people.includes(member.name))
+          .map(member => member.id);
+
+        if (memberIds.length > 0) {
+          await dataService.associatePhotoWithMembers(newPhoto.id, memberIds);
+        }
+
         // Refresh photos list
         const updatedPhotos = await dataService.getFamilyPhotos();
         setPhotos(updatedPhotos);

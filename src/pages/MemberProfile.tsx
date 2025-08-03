@@ -20,6 +20,7 @@ import {
   User,
   Edit,
 } from 'lucide-react';
+import ProfilePictureUpload from '@/components/ProfilePictureUpload';
 import { dataService } from '@/services/dataService';
 import { useToast } from '@/hooks/use-toast';
 import type { Database } from '@/integrations/supabase/types';
@@ -43,6 +44,7 @@ const MemberProfile = () => {
   );
   const [showEditForm, setShowEditForm] = useState(false);
   const [editForm, setEditForm] = useState<Partial<FamilyMember>>({});
+  const [showProfilePictureUpload, setShowProfilePictureUpload] = useState(false);
 
   useEffect(() => {
     const loadMemberData = async () => {
@@ -52,8 +54,7 @@ const MemberProfile = () => {
       try {
         // If we don't have member data, fetch it
         if (!member) {
-          const members = await dataService.getFamilyMembers();
-          const foundMember = members.find((m) => m.id === id);
+          const foundMember = await dataService.getFamilyMemberById(id);
           if (foundMember) {
             setMember(foundMember);
           } else {
@@ -61,9 +62,9 @@ const MemberProfile = () => {
           }
         }
 
-        // Load photos for this member (you might need to add this to dataService)
-        // For now, we'll use a placeholder
-        setPhotos([]);
+        // Load photos for this member
+        const memberPhotos = await dataService.getPhotosForMember(id);
+        setPhotos(memberPhotos);
       } catch (error) {
         console.error('Error loading member data:', error);
         toast({
@@ -170,14 +171,18 @@ const MemberProfile = () => {
                     alt={member.name}
                     className="w-full h-full object-cover rounded-full border-4 border-white/30"
                   />
-                ) : (
-                  <div className="w-full h-full bg-white/20 rounded-full border-4 border-white/30 flex items-center justify-center">
-                    <User className="w-16 h-16 text-white" />
-                  </div>
-                )}
-                <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-family-warm rounded-full flex items-center justify-center">
-                  <Heart className="w-4 h-4 text-white" />
-                </div>
+                 ) : (
+                   <div className="w-full h-full bg-white/20 rounded-full border-4 border-white/30 flex items-center justify-center">
+                     <User className="w-16 h-16 text-white" />
+                   </div>
+                 )}
+                 <button
+                   onClick={() => setShowProfilePictureUpload(true)}
+                   className="absolute -bottom-2 -right-2 w-8 h-8 bg-family-warm rounded-full flex items-center justify-center hover:bg-family-warm/80 transition-colors"
+                   title="Change profile picture"
+                 >
+                   <Camera className="w-4 h-4 text-white" />
+                 </button>
               </div>
               <h1 className="text-3xl font-bold mb-2">{member.name}</h1>
               <Badge variant="secondary" className="text-lg px-4 py-2">
@@ -200,7 +205,7 @@ const MemberProfile = () => {
             variant="ghost"
             size="icon"
             className="absolute top-4 left-4 text-white hover:bg-white/20"
-            onClick={() => navigate(-1)}
+            onClick={() => navigate('/members')}
           >
             <ArrowLeft className="w-6 h-6" />
           </Button>
@@ -475,6 +480,20 @@ const MemberProfile = () => {
               </div>
             </div>
           </div>
+        )}
+
+        {/* Profile Picture Upload Modal */}
+        {showProfilePictureUpload && member && (
+          <ProfilePictureUpload
+            memberId={member.id}
+            currentAvatarUrl={member.avatar_url}
+            memberName={member.name}
+            onClose={() => setShowProfilePictureUpload(false)}
+            onUploadSuccess={(newAvatarUrl) => {
+              setMember({ ...member, avatar_url: newAvatarUrl });
+              setShowProfilePictureUpload(false);
+            }}
+          />
         )}
       </Layout>
     </ProtectedRoute>

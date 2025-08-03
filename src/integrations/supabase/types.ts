@@ -100,6 +100,7 @@ export type Database = {
       }
       family_photos: {
         Row: {
+          binh_photo: Json | null
           category_id: string | null
           created_at: string
           description: string | null
@@ -113,6 +114,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          binh_photo?: Json | null
           category_id?: string | null
           created_at?: string
           description?: string | null
@@ -126,6 +128,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          binh_photo?: Json | null
           category_id?: string | null
           created_at?: string
           description?: string | null
@@ -218,6 +221,42 @@ export type Database = {
           name?: string
         }
         Relationships: []
+      }
+      photo_members: {
+        Row: {
+          created_at: string
+          id: string
+          member_id: string
+          photo_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          member_id: string
+          photo_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          member_id?: string
+          photo_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "photo_members_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "family_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "photo_members_photo_id_fkey"
+            columns: ["photo_id"]
+            isOneToOne: false
+            referencedRelation: "family_photos"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
