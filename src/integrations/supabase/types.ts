@@ -98,6 +98,45 @@ export type Database = {
         }
         Relationships: []
       }
+      family_memories: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          is_favorite: boolean | null
+          location: string | null
+          member_id: string
+          memory_date: string | null
+          tags: string[] | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          is_favorite?: boolean | null
+          location?: string | null
+          member_id: string
+          memory_date?: string | null
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          is_favorite?: boolean | null
+          location?: string | null
+          member_id?: string
+          memory_date?: string | null
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       family_photos: {
         Row: {
           binh_photo: Json | null

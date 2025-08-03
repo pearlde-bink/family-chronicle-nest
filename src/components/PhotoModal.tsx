@@ -96,7 +96,7 @@ const PhotoModal = ({
         )}
 
         {/* Photo Container */}
-        <div className="relative max-w-4xl max-h-full">
+        <div className="relative w-full h-full flex items-center justify-center">
           {isLoading && (
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="w-8 h-8 border-4 border-white border-t-transparent rounded-full animate-spin"></div>

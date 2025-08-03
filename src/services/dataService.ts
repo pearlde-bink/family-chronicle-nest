@@ -6,6 +6,7 @@ type FamilyEvent = Database['public']['Tables']['family_events']['Row'];
 type FamilyPhoto = Database['public']['Tables']['family_photos']['Row'];
 type FamilyPost = Database['public']['Tables']['family_posts']['Row'];
 type PhotoCategory = Database['public']['Tables']['photo_categories']['Row'];
+type FamilyMemory = Database['public']['Tables']['family_memories']['Row'];
 
 export interface PhotoWithCategory extends FamilyPhoto {
   category?: PhotoCategory;
@@ -252,5 +253,71 @@ export const dataService = {
     }
 
     return data;
+  },
+
+  // Family Memories
+  async getMemoriesForMember(memberId: string): Promise<FamilyMemory[]> {
+    const { data, error } = await supabase
+      .from('family_memories')
+      .select('*')
+      .eq('member_id', memberId)
+      .order('memory_date', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching memories for member:', error);
+      return [];
+    }
+
+    return data || [];
+  },
+
+  async createMemory(
+    memory: Database['public']['Tables']['family_memories']['Insert']
+  ): Promise<FamilyMemory | null> {
+    const { data, error } = await supabase
+      .from('family_memories')
+      .insert(memory)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error creating memory:', error);
+      return null;
+    }
+
+    return data;
+  },
+
+  async updateMemory(
+    id: string,
+    updates: Database['public']['Tables']['family_memories']['Update']
+  ): Promise<FamilyMemory | null> {
+    const { data, error } = await supabase
+      .from('family_memories')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error updating memory:', error);
+      return null;
+    }
+
+    return data;
+  },
+
+  async deleteMemory(id: string): Promise<boolean> {
+    const { error } = await supabase
+      .from('family_memories')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      console.error('Error deleting memory:', error);
+      return false;
+    }
+
+    return true;
   },
 };

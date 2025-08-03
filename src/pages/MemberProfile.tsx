@@ -19,6 +19,9 @@ import {
   ArrowLeft,
   User,
   Edit,
+  Plus,
+  Trash2,
+  Star,
 } from 'lucide-react';
 import ProfilePictureUpload from '@/components/ProfilePictureUpload';
 import { dataService } from '@/services/dataService';
@@ -27,6 +30,7 @@ import type { Database } from '@/integrations/supabase/types';
 
 type FamilyMember = Database['public']['Tables']['family_members']['Row'];
 type FamilyPhoto = Database['public']['Tables']['family_photos']['Row'];
+type FamilyMemory = Database['public']['Tables']['family_memories']['Row'];
 
 const MemberProfile = () => {
   const { id } = useParams<{ id: string }>();
@@ -38,6 +42,7 @@ const MemberProfile = () => {
     location.state?.member || null
   );
   const [photos, setPhotos] = useState<FamilyPhoto[]>([]);
+  const [memories, setMemories] = useState<FamilyMemory[]>([]);
   const [loading, setLoading] = useState(!member);
   const [activeTab, setActiveTab] = useState<'about' | 'photos' | 'memories'>(
     'about'
@@ -45,6 +50,15 @@ const MemberProfile = () => {
   const [showEditForm, setShowEditForm] = useState(false);
   const [editForm, setEditForm] = useState<Partial<FamilyMember>>({});
   const [showProfilePictureUpload, setShowProfilePictureUpload] = useState(false);
+  const [showMemoryForm, setShowMemoryForm] = useState(false);
+  const [editingMemory, setEditingMemory] = useState<FamilyMemory | null>(null);
+  const [memoryForm, setMemoryForm] = useState({
+    title: '',
+    content: '',
+    memory_date: '',
+    location: '',
+    is_favorite: false,
+  });
 
   useEffect(() => {
     const loadMemberData = async () => {
@@ -65,6 +79,10 @@ const MemberProfile = () => {
         // Load photos for this member
         const memberPhotos = await dataService.getPhotosForMember(id);
         setPhotos(memberPhotos);
+
+        // Load memories for this member
+        const memberMemories = await dataService.getMemoriesForMember(id);
+        setMemories(memberMemories);
       } catch (error) {
         console.error('Error loading member data:', error);
         toast({
@@ -113,6 +131,94 @@ const MemberProfile = () => {
       toast({
         title: 'Error',
         description: 'Failed to update member information. Please try again.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleAddMemory = () => {
+    setMemoryForm({
+      title: '',
+      content: '',
+      memory_date: '',
+      location: '',
+      is_favorite: false,
+    });
+    setEditingMemory(null);
+    setShowMemoryForm(true);
+  };
+
+  const handleEditMemory = (memory: FamilyMemory) => {
+    setMemoryForm({
+      title: memory.title,
+      content: memory.content,
+      memory_date: memory.memory_date || '',
+      location: memory.location || '',
+      is_favorite: memory.is_favorite || false,
+    });
+    setEditingMemory(memory);
+    setShowMemoryForm(true);
+  };
+
+  const handleSaveMemory = async () => {
+    if (!member) return;
+
+    try {
+      if (editingMemory) {
+        // Update existing memory
+        const updatedMemory = await dataService.updateMemory(editingMemory.id, {
+          ...memoryForm,
+          memory_date: memoryForm.memory_date || null,
+          location: memoryForm.location || null,
+        });
+        if (updatedMemory) {
+          setMemories(memories.map(m => 
+            m.id === updatedMemory.id ? updatedMemory : m
+          ));
+        }
+      } else {
+        // Create new memory
+        const newMemory = await dataService.createMemory({
+          ...memoryForm,
+          member_id: member.id,
+          memory_date: memoryForm.memory_date || null,
+          location: memoryForm.location || null,
+        });
+        if (newMemory) {
+          setMemories([newMemory, ...memories]);
+        }
+      }
+      
+      setShowMemoryForm(false);
+      toast({
+        title: 'Success!',
+        description: `Memory ${editingMemory ? 'updated' : 'created'} successfully.`,
+      });
+    } catch (error) {
+      console.error('Error saving memory:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to save memory. Please try again.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleDeleteMemory = async (memoryId: string) => {
+    try {
+      const success = await dataService.deleteMemory(memoryId);
+      if (success) {
+        setMemories(memories.filter(m => m.id !== memoryId));
+        toast({
+          title: 'Success!',
+          description: 'Memory deleted successfully.',
+        });
+      }
+    } catch (error) {
+      console.error('Error deleting memory:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to delete memory. Please try again.',
         variant: 'destructive',
       });
     }
@@ -364,36 +470,102 @@ const MemberProfile = () => {
 
           {activeTab === 'memories' && (
             <div className="space-y-6">
-              <div className="text-center mb-6">
-                <h2 className="text-2xl font-bold text-foreground mb-2">
-                  Special Memories
-                </h2>
-                <p className="text-muted-foreground">
-                  Cherished moments and stories about {member.name}
-                </p>
+              <div className="flex justify-between items-center mb-6">
+                <div className="text-center flex-1">
+                  <h2 className="text-2xl font-bold text-foreground mb-2">
+                    Special Memories
+                  </h2>
+                  <p className="text-muted-foreground">
+                    Cherished moments and stories about {member.name}
+                  </p>
+                </div>
+                <Button onClick={handleAddMemory} className="flex items-center gap-2">
+                  <Plus className="w-4 h-4" />
+                  Add Memory
+                </Button>
               </div>
 
-              <Card>
-                <CardContent className="p-6">
-                  <div className="space-y-4">
-                    <div className="flex items-start gap-4">
-                      <div className="w-12 h-12 bg-family-warm rounded-full flex items-center justify-center flex-shrink-0">
-                        <Heart className="w-6 h-6 text-white" />
-                      </div>
-                      <div>
-                        <h4 className="font-semibold text-foreground">
-                          Family Member
-                        </h4>
-                        <p className="text-sm text-muted-foreground">Always</p>
-                        <p className="text-foreground mt-2">
-                          {member.name} is a beloved member of our family,
-                          bringing joy and love to everyone around them.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              {memories.length > 0 ? (
+                <div className="space-y-4">
+                  {memories.map((memory) => (
+                    <Card key={memory.id}>
+                      <CardContent className="p-6">
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-start gap-4 flex-1">
+                            <div className="w-12 h-12 bg-family-warm rounded-full flex items-center justify-center flex-shrink-0">
+                              {memory.is_favorite ? (
+                                <Star className="w-6 h-6 text-white fill-current" />
+                              ) : (
+                                <Heart className="w-6 h-6 text-white" />
+                              )}
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-2">
+                                <h4 className="font-semibold text-foreground">
+                                  {memory.title}
+                                </h4>
+                                {memory.is_favorite && (
+                                  <Badge variant="secondary" className="text-xs">
+                                    Favorite
+                                  </Badge>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-4 text-sm text-muted-foreground mb-2">
+                                {memory.memory_date && (
+                                  <div className="flex items-center gap-1">
+                                    <Calendar className="w-4 h-4" />
+                                    {new Date(memory.memory_date).toLocaleDateString()}
+                                  </div>
+                                )}
+                                {memory.location && (
+                                  <div className="flex items-center gap-1">
+                                    <MapPin className="w-4 h-4" />
+                                    {memory.location}
+                                  </div>
+                                )}
+                              </div>
+                              <p className="text-foreground leading-relaxed">
+                                {memory.content}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 ml-4">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleEditMemory(memory)}
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeleteMemory(memory.id)}
+                              className="text-destructive hover:text-destructive"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <Heart className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-foreground mb-2">
+                    No memories yet
+                  </h3>
+                  <p className="text-muted-foreground mb-4">
+                    Start collecting precious memories about {member.name}.
+                  </p>
+                  <Button onClick={handleAddMemory}>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add First Memory
+                  </Button>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -494,6 +666,105 @@ const MemberProfile = () => {
               setShowProfilePictureUpload(false);
             }}
           />
+        )}
+
+        {/* Memory Form Modal */}
+        {showMemoryForm && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+            <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between p-6 border-b">
+                <h2 className="text-xl font-semibold">
+                  {editingMemory ? 'Edit Memory' : 'Add New Memory'}
+                </h2>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setShowMemoryForm(false)}
+                >
+                  <ArrowLeft className="w-5 h-5" />
+                </Button>
+              </div>
+
+              <div className="p-6 space-y-4">
+                <div>
+                  <Label htmlFor="memory-title">Title</Label>
+                  <Input
+                    id="memory-title"
+                    value={memoryForm.title}
+                    onChange={(e) =>
+                      setMemoryForm({ ...memoryForm, title: e.target.value })
+                    }
+                    placeholder="Enter memory title"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="memory-content">Memory</Label>
+                  <Textarea
+                    id="memory-content"
+                    value={memoryForm.content}
+                    onChange={(e) =>
+                      setMemoryForm({ ...memoryForm, content: e.target.value })
+                    }
+                    placeholder="Share this special memory..."
+                    rows={4}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="memory-date">Date</Label>
+                    <Input
+                      id="memory-date"
+                      type="date"
+                      value={memoryForm.memory_date}
+                      onChange={(e) =>
+                        setMemoryForm({ ...memoryForm, memory_date: e.target.value })
+                      }
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="memory-location">Location</Label>
+                    <Input
+                      id="memory-location"
+                      value={memoryForm.location}
+                      onChange={(e) =>
+                        setMemoryForm({ ...memoryForm, location: e.target.value })
+                      }
+                      placeholder="Where did this happen?"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="is-favorite"
+                    checked={memoryForm.is_favorite}
+                    onChange={(e) =>
+                      setMemoryForm({ ...memoryForm, is_favorite: e.target.checked })
+                    }
+                    className="rounded"
+                  />
+                  <Label htmlFor="is-favorite">Mark as favorite memory</Label>
+                </div>
+
+                <div className="flex gap-3 pt-4">
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowMemoryForm(false)}
+                    className="flex-1"
+                  >
+                    Cancel
+                  </Button>
+                  <Button onClick={handleSaveMemory} className="flex-1">
+                    {editingMemory ? 'Update Memory' : 'Save Memory'}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
         )}
       </Layout>
     </ProtectedRoute>
